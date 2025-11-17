@@ -93,6 +93,17 @@ function App() {
                         }
                     />
 
+                    {/* UPDATE CONDITION / ENCOUNTER / OBSERVATION */}
+                    <Route
+                        path="/doctor/patient/:id/update-condition/:conditionId"
+                        element={
+                            <ProtectedRoute allowed={["Doctor"]}>
+                                <AddDiagnosisForm />
+                            </ProtectedRoute>
+                        }
+                    />
+
+
                     {/* DEFAULT / HOMEPAGE */}
                     <Route path="/" element={<LoginForm />} />
 
