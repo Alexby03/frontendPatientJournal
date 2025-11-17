@@ -53,7 +53,12 @@ function ObservationForm() {
             }
 
             if (!res.ok) throw new Error(observationId ? "Failed to update observation" : "Failed to create observation");
-            navigate(`/doctor/patient/${id}`);
+
+            const redirectTo = user.userType === "OtherStaff"
+                ? `/staff/patient/${id}`
+                : `/doctor/patient/${id}`;
+            navigate(redirectTo);
+
         } catch (err) {
             alert(err.message);
         }

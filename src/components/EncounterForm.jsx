@@ -54,7 +54,12 @@ function EncounterForm() {
             }
 
             if (!res.ok) throw new Error(encounterId ? "Failed to update encounter" : "Failed to create encounter");
-            navigate(`/doctor/patient/${id}`);
+
+            const redirectTo = user.userType === "OtherStaff"
+                ? `/staff/patient/${id}`
+                : `/doctor/patient/${id}`;
+            navigate(redirectTo);
+
         } catch (err) {
             alert(err.message);
         }

@@ -56,7 +56,12 @@ function ConditionForm() {
             }
 
             if (!res.ok) throw new Error(conditionId ? "Failed to update condition" : "Failed to create condition");
-            navigate(`/doctor/patient/${id}`);
+
+            const redirectTo = user.userType === "OtherStaff"
+                ? `/staff/patient/${id}`
+                : `/doctor/patient/${id}`;
+            navigate(redirectTo);
+
         } catch (err) {
             alert(err.message);
         }
