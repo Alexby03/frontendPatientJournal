@@ -118,18 +118,21 @@ function DoctorPatientDetail() {
                         </tr>
                         </thead>
                         <tbody>
-                        {patientData.conditions.map((c) => (
-                            <tr key={c.conditionId}>
-                                <td>{c.conditionName}</td>
-                                <td>{c.conditionType}</td>
-                                <td>{c.severityLevel}</td>
-                                <td>{formatDate(c.diagnosedDate)}</td>
-                                <td style={{textAlign:"center"}}>
-                                    <button className="btn" onClick={() => navigate(`/doctor/patient/${id}/update-condition/${c.conditionId}`)}>Update</button>
-                                    <button className="btn btn-logout" onClick={() => handleDelete("Condition", c.conditionId)}>Delete</button>
-                                </td>
-                            </tr>
-                        ))}
+                        {patientData.conditions
+                            .slice()
+                            .sort((a, b) => new Date(b.diagnosedDate) - new Date(a.diagnosedDate))
+                            .map((c) => (
+                                <tr key={c.conditionId}>
+                                    <td>{c.conditionName}</td>
+                                    <td>{c.conditionType}</td>
+                                    <td>{c.severityLevel}</td>
+                                    <td>{formatDate(c.diagnosedDate)}</td>
+                                    <td style={{textAlign:"center"}}>
+                                        <button className="btn" onClick={() => navigate(`/doctor/patient/${id}/update-condition/${c.conditionId}`)}>Update</button>
+                                        <button className="btn btn-logout" onClick={() => handleDelete("Condition", c.conditionId)}>Delete</button>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 ) : <p>No conditions found.</p>}
@@ -199,5 +202,4 @@ function DoctorPatientDetail() {
         </div>
     );
 }
-
 export default DoctorPatientDetail;
