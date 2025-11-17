@@ -1,0 +1,149 @@
+.patient-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+    font-family: Arial, sans-serif;
+    color: #333;
+    background: linear-gradient(135deg, #f7f7ff, #e6e6ff);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Header */
+.patient-container h1 {
+    font-size: 2.2rem;
+    color: #6c63ff;
+    margin-bottom: 0.5rem;
+}
+
+.patient-container .email {
+    font-size: 1rem;
+    color: #3f3d56;
+    margin-bottom: 4rem; /* Mer space mellan email och första sektionen */
+}
+
+/* Sections */
+.patient-section {
+    margin-bottom: 2rem; /* Ökat space mellan sektioner */
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dcdcff;
+}
+
+.patient-section h2 {
+    font-size: 1.5rem;
+    color: #5750d6;
+    margin-bottom: 0.8rem; /* Lite mer space under rubriken */
+}
+
+/* Lists */
+.patient-section ul {
+    list-style-type: disc;
+    margin-left: 1.5rem;
+}
+
+.patient-section li {
+    margin-bottom: 0.5rem; /* Lite mer space mellan list-items */
+}
+
+/* Loading and error */
+.loading {
+    text-align: center;
+    font-weight: bold;
+    color: #6c63ff;
+}
+
+.error-message {
+    text-align: center;
+    color: #d8000c;
+    background-color: #ffe0e0;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+/* Tables */
+.patient-section table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px; /* spacing mellan rader */
+    margin-top: 1rem;
+}
+
+.patient-section th,
+.patient-section td {
+    text-align: left;
+    padding: 12px 15px; /* mer padding för luft */
+}
+
+.patient-section th {
+    background-color: #464292;
+    color: #fff;
+    font-weight: 600;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.patient-section td {
+    background-color: #f7f7ff;
+    border-bottom: 1px solid #e0e0ff;
+    border-radius: 6px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.patient-section tr:hover td {
+    background-color: #f0f0ff; /* ljusblå ton vid hover */
+    transform: none;
+    box-shadow: none;
+}
+
+.patient-section tbody tr:last-child td {
+    border-bottom: none; /* ta bort extra kant på sista raden */
+}
+
+
+/* Optional: make header sticky if table is long */
+.patient-section th {
+    position: sticky;
+    top: 0;
+}
+
+.btn {
+    padding: 6px 12px;
+    margin-left: 5px;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #6c63ff;
+    color: white;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.btn:hover {
+    background-color: #5750d6;
+    transform: translateY(-2px);
+}
+
+.btn-add {
+    background-color: #4caf50;
+}
+
+.btn-add:hover {
+    background-color: #449d48;
+}
+
+.btn-back {
+    background-color: #6c63ff;
+}
+
+.btn-back:hover {
+    background-color: #5750d6;
+}
+
+.btn-logout {
+    background-color: #d8000c;
+}
+
+.btn-logout:hover {
+    background-color: #a60009;
+}
+
