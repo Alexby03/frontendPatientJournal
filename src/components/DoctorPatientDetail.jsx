@@ -26,7 +26,6 @@ function DoctorPatientDetail() {
                 setLoading(false);
             }
         };
-
         if (id) fetchPatientData();
     }, [id]);
 
@@ -48,46 +47,34 @@ function DoctorPatientDetail() {
         });
     };
 
-    const handleUpdate = (type, itemId) => alert(`Update ${type} with ID: ${itemId} (implement form)`);
+    const handleDelete = async (type, itemId) => {
+        if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
 
-    const handleDelete = async (type, item) => {
-        let itemId, endpoint;
-
+        let url = "";
         switch(type) {
             case "Condition":
-                itemId = item.conditionId;
-                endpoint = "conditions";
+                url = `${API_BASE_URL}/conditions/${itemId}`;
                 break;
             case "Encounter":
-                itemId = item.encounterId;
-                endpoint = "encounters";
+                url = `${API_BASE_URL}/encounters/${itemId}`;
                 break;
             case "Observation":
-                itemId = item.observationId;
-                endpoint = "observations";
+                url = `${API_BASE_URL}/observations/${itemId}`;
                 break;
             default:
                 return;
         }
 
-        if (window.confirm(`Are you sure you want to delete this ${type}?`)) {
-            try {
-                const res = await fetch(`${API_BASE_URL}/${endpoint}/${itemId}`, {
-                    method: "DELETE"
-                });
-                if (!res.ok) throw new Error(`${type} could not be deleted`);
-
-                // Remove from state so UI updates
-                setPatientData(prev => ({
-                    ...prev,
-                    [type.toLowerCase() + "s"]: prev[type.toLowerCase() + "s"].filter(i => {
-                        const idKey = type === "Condition" ? "conditionId" : type === "Encounter" ? "encounterId" : "observationId";
-                        return i[idKey] !== itemId;
-                    })
-                }));
-            } catch (err) {
-                alert(err.message);
-            }
+        try {
+            const res = await fetch(url, { method: "DELETE" });
+            if (!res.ok) throw new Error(`${type} could not be deleted`);
+            alert(`${type} deleted successfully`);
+            // Refresh patient data
+            const refresh = await fetch(`${API_BASE_URL}/patients/${id}?fetchRelations=true`);
+            const refreshedData = await refresh.json();
+            setPatientData(refreshedData);
+        } catch (err) {
+            alert(err.message);
         }
     };
 
@@ -96,16 +83,16 @@ function DoctorPatientDetail() {
         navigate("/login");
     };
 
-    if(loading) return <p className="loading">Loading patient data...</p>;
-    if(error) return <p className="error-message">{error}</p>;
-    if(!patientData) return null;
+    if (loading) return <p className="loading">Loading patient data...</p>;
+    if (error) return <p className="error-message">{error}</p>;
+    if (!patientData) return null;
 
     return (
         <div className="patient-container">
             {/* Top Taskbar */}
             <div className="taskbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px" }}>
                 <div>
-                    <button className="btn btn-back" onClick={() => navigate(-1)}>Back</button>
+                    <button className="btn btn-back" onClick={() => navigate(`/doctor/patients`)}>Back</button>
                     <button className="btn btn-logout" onClick={logout}>Logout</button>
                 </div>
             </div>
@@ -127,19 +114,19 @@ function DoctorPatientDetail() {
                             <th>Type</th>
                             <th>Severity</th>
                             <th>Diagnosed Date</th>
-                            <th>Actions</th>
+                            <th style={{textAlign:"center"}}>Actions</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {patientData.conditions.map((c, index) => (
-                            <tr key={index}>
+                        {patientData.conditions.map((c) => (
+                            <tr key={c.conditionId}>
                                 <td>{c.conditionName}</td>
                                 <td>{c.conditionType}</td>
                                 <td>{c.severityLevel}</td>
                                 <td>{formatDate(c.diagnosedDate)}</td>
-                                <td style={{ textAlign: "center" }}>
-                                    <button className="btn" onClick={() => handleUpdate("Condition", c.conditionId)}>Update</button>
-                                    <button className="btn btn-logout" onClick={() => handleDelete("Condition", c)}>Delete</button>
+                                <td style={{textAlign:"center"}}>
+                                    <button className="btn" onClick={() => navigate(`/doctor/patient/${id}/update-condition/${c.conditionId}`)}>Update</button>
+                                    <button className="btn btn-logout" onClick={() => handleDelete("Condition", c.conditionId)}>Delete</button>
                                 </td>
                             </tr>
                         ))}
@@ -158,19 +145,19 @@ function DoctorPatientDetail() {
                     <table>
                         <thead>
                         <tr>
-                            <th>Date</th>
                             <th>Description</th>
-                            <th>Actions</th>
+                            <th>Date</th>
+                            <th style={{textAlign:"center"}}>Actions</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {patientData.encounters.map((e, index) => (
-                            <tr key={index}>
-                                <td>{formatDateTime(e.encounterDate)}</td>
+                        {patientData.encounters.map((e) => (
+                            <tr key={e.encounterId}>
                                 <td>{e.description}</td>
-                                <td style={{ textAlign: "center" }}>
-                                    <button className="btn" onClick={() => handleUpdate("Encounter", e.encounterId)}>Update</button>
-                                    <button className="btn btn-logout" onClick={() => handleDelete("Encounter", e)}>Delete</button>
+                                <td>{formatDateTime(e.encounterDate)}</td>
+                                <td style={{textAlign:"center"}}>
+                                    <button className="btn" onClick={() => navigate(`/doctor/patient/${id}/update-encounter/${e.encounterId}`)}>Update</button>
+                                    <button className="btn btn-logout" onClick={() => handleDelete("Encounter", e.encounterId)}>Delete</button>
                                 </td>
                             </tr>
                         ))}
@@ -191,17 +178,17 @@ function DoctorPatientDetail() {
                         <tr>
                             <th>Description</th>
                             <th>Date</th>
-                            <th>Actions</th>
+                            <th style={{textAlign:"center"}}>Actions</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {patientData.observations.map((o, index) => (
-                            <tr key={index}>
+                        {patientData.observations.map((o) => (
+                            <tr key={o.observationId}>
                                 <td>{o.description}</td>
                                 <td>{formatDateTime(o.observationDate)}</td>
-                                <td style={{ textAlign: "center" }}>
-                                    <button className="btn" onClick={() => handleUpdate("Observation", o.observationId)}>Update</button>
-                                    <button className="btn btn-logout" onClick={() => handleDelete("Observation", o)}>Delete</button>
+                                <td style={{textAlign:"center"}}>
+                                    <button className="btn" onClick={() => navigate(`/doctor/patient/${id}/update-observation/${o.observationId}`)}>Update</button>
+                                    <button className="btn btn-logout" onClick={() => handleDelete("Observation", o.observationId)}>Delete</button>
                                 </td>
                             </tr>
                         ))}

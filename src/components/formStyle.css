@@ -1,0 +1,109 @@
+/* formStyles.css */
+.form-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2.5rem;
+    font-family: Arial, sans-serif;
+    color: #333;
+    background: linear-gradient(135deg, #f7f7ff, #e6e6ff);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Form header */
+.form-container h1,
+.form-container h2 {
+    color: #6c63ff;
+    margin-bottom: 1rem;
+}
+
+.form-container h2 {
+    color: #5750d6;
+    font-size: 1.6rem;
+}
+
+/* Form fields */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #dcdcff;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #6c63ff;
+    box-shadow: 0 0 5px rgba(108, 99, 255, 0.4);
+    outline: none;
+}
+
+/* Buttons */
+.form-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    justify-content: flex-end;
+}
+
+.form-buttons .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-submit {
+    background-color: #6c63ff;
+    color: white;
+}
+
+.btn-submit:hover {
+    background-color: #5750d6;
+    transform: translateY(-2px);
+}
+
+.btn-cancel {
+    background-color: #d8000c;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background-color: #a60009;
+    transform: translateY(-2px);
+}
+
+/* Optional: error / success messages */
+.form-message {
+    margin-bottom: 1rem;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.form-error {
+    background-color: #ffe0e0;
+    color: #d8000c;
+}
+
+.form-success {
+    background-color: #e0ffe6;
+    color: #2e7d32;
+}

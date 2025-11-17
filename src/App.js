@@ -3,13 +3,14 @@ import { AuthProvider } from "./context/AuthContext";
 
 import LoginForm from "./components/LoginForm";
 import Register from "./components/Register";
+import StaffPatient from "./components/StaffPatient";
 import PatientDetail from "./components/PatientDetail";
 import PatientList from "./components/PatientList";
 import DoctorPatientDetail from "./components/DoctorPatientDetail";
 import MessageInbox from "./components/MessageInbox";
-import AddDiagnosisForm from "./components/AddDiagnosisForm";
-import CreateNoteForm from "./components/CreateNoteForm";
-import AddObservationForm from "./components/AddObservationForm";
+import ConditionForm from "./components/ConditionForm";
+import EncounterForm from "./components/EncounterForm";
+import ObservationForm from "./components/ObservationForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MessageThread from "./components/MessageThread";
 
@@ -48,6 +49,15 @@ function App() {
                     />
 
                     <Route
+                        path="/staff/patient/:id"
+                        element={
+                            <ProtectedRoute allowed={["OtherStaff"]}>
+                                <StaffPatient />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
                         path="/doctor/patient/:id"
                         element={
                             <ProtectedRoute allowed={["Doctor"]}>
@@ -69,8 +79,8 @@ function App() {
                     <Route
                         path="/doctor/patient/:id/add-condition"
                         element={
-                            <ProtectedRoute allowed={["Doctor"]}>
-                                <AddDiagnosisForm />
+                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                <ConditionForm />
                             </ProtectedRoute>
                         }
                     />
@@ -78,8 +88,8 @@ function App() {
                     <Route
                         path="/doctor/patient/:id/add-encounter"
                         element={
-                            <ProtectedRoute allowed={["Doctor"]}>
-                                <CreateNoteForm />
+                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                <EncounterForm />
                             </ProtectedRoute>
                         }
                     />
@@ -87,8 +97,8 @@ function App() {
                     <Route
                         path="/doctor/patient/:id/add-observation"
                         element={
-                            <ProtectedRoute allowed={["Doctor"]}>
-                                <AddObservationForm />
+                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                <ObservationForm />
                             </ProtectedRoute>
                         }
                     />
@@ -97,8 +107,26 @@ function App() {
                     <Route
                         path="/doctor/patient/:id/update-condition/:conditionId"
                         element={
-                            <ProtectedRoute allowed={["Doctor"]}>
-                                <AddDiagnosisForm />
+                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                <ConditionForm/>
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/doctor/patient/:id/update-encounter/:encounterId"
+                        element={
+                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                <EncounterForm />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/doctor/patient/:id/update-observation/:observationId"
+                        element={
+                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                <ObservationForm />
                             </ProtectedRoute>
                         }
                     />
