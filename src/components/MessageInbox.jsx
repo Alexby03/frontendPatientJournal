@@ -99,7 +99,7 @@ function MessageInbox() {
                     switch(user.userType) {
                         case "Patient": navigate("/patient/me"); break;
                         case "Doctor": navigate("/doctor/patients"); break;
-                        case "OtherStaff": navigate("/doctor/messages"); break;
+                        case "OtherStaff": navigate("/doctor/patients"); break;
                         default: navigate("/");
                     }
                 }}>

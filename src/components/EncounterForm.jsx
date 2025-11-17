@@ -8,7 +8,6 @@ function EncounterForm() {
     const { id, encounterId } = useParams(); // patientId + optional encounterId
     const navigate = useNavigate();
     const user = JSON.parse(sessionStorage.getItem("user"));
-
     const [description, setDescription] = useState("");
     const [encounterDate, setEncounterDate] = useState("");
 
