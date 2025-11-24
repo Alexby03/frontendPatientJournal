@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://78.72.148.32:8080/api/patients";
+const API_URL = process.env.REACT_APP_API_PATIENTS_URL;
 
 export const getAllPatients = async () => {
     const res = await axios.get(API_URL);

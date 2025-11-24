@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 import "./LoginForm.css";
 
-const API_BASE_URL = "http://78.72.148.32:8080";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function LoginForm() {
     const [email, setEmail] = useState("");

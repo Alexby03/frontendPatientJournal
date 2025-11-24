@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./PatientDetail.css";
 
-const API_BASE_URL = "http://78.72.148.32:8080";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function DoctorPatientDetail() {
     const { id } = useParams(); // patientId

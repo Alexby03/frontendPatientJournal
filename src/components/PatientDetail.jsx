@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"; // import AuthContext hook
 import "./PatientDetail.css";
 
-const API_BASE_URL = "http://78.72.148.32:8080";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function PatientDetail() {
     const navigate = useNavigate();
