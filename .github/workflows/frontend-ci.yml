@@ -24,7 +24,7 @@ jobs:
         working-directory: ./
 
       - name: Build React app
-        run: npm run build
+        run: CI=false npm run build
         working-directory: ./
 
       - name: Log in to Docker Hub
