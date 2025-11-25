@@ -3,11 +3,9 @@ FROM node:24-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-
 RUN npm ci
 
 COPY . .
-
 RUN npm run build
 
 FROM nginx:alpine
@@ -16,8 +14,6 @@ RUN rm -rf /usr/share/nginx/html/*
 
 COPY --from=build /app/build /usr/share/nginx/html
 
-RUN echo 'server { listen 3000; server_name localhost; location / { root /usr/share/nginx/html; index index.html index.htm; } }' > /etc/nginx/conf.d/default.conf
-
-EXPOSE 3000
+EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]

@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./Messages.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_USERMANAGER_URL = process.env.REACT_APP_API_USERMANAGER_URL;
+const API_MESSAGESERVICE_URL = process.env.REACT_APP_API_MESSAGESERVICE_URL
 
 function MessageThread() {
     const { threadId } = useParams();
@@ -22,7 +23,7 @@ function MessageThread() {
         if (userCache[senderId]) return userCache[senderId];
 
         try {
-            const res = await fetch(`${API_BASE_URL}/users/${senderId}`);
+            const res = await fetch(`${API_USERMANAGER_URL}/users/${senderId}`);
             const data = await res.json();
             setUserCache(prev => ({ ...prev, [senderId]: data.fullName }));
             return data.fullName;
@@ -35,7 +36,7 @@ function MessageThread() {
         const fetchMessages = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`${API_BASE_URL}/messages/session/${threadId}`);
+                const res = await fetch(`${API_MESSAGESERVICE_URL}/messages/session/${threadId}`);
                 let data = await res.json();
 
                 // Sort ascending for newest at bottom
@@ -68,7 +69,7 @@ function MessageThread() {
         const dto = { sessionId: threadId, senderId: user.id, message: newMessage };
 
         try {
-            const res = await fetch(`${API_BASE_URL}/messages`, {
+            const res = await fetch(`${API_MESSAGESERVICE_URL}/messages`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(dto)
@@ -87,7 +88,7 @@ function MessageThread() {
     const handleDelete = async (messageId) => {
         if (!window.confirm("Are you sure you want to delete this message?")) return;
         try {
-            await fetch(`${API_BASE_URL}/messages/${messageId}`, { method: "DELETE" });
+            await fetch(`${API_MESSAGESERVICE_URL}/messages/${messageId}`, { method: "DELETE" });
             setMessages(prev => prev.filter(msg => msg.messageId !== messageId));
         } catch (err) {
             alert(err.message);

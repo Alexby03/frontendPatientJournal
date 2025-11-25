@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 import "./LoginForm.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_USERMANAGER_URL = process.env.REACT_APP_API_USERMANAGER_URL;
 
 function LoginForm() {
     const [email, setEmail] = useState("");
@@ -25,7 +25,7 @@ function LoginForm() {
                 password: password
             };
 
-            const response = await fetch(`${API_BASE_URL}/users/login`, {
+            const response = await fetch(`${API_USERMANAGER_URL}/users/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

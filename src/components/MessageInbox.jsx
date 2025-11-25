@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./Messages.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_MESSAGESERVICE_URL = process.env.REACT_APP_API_MESSAGESERVICE_URL;
+const API_USERMANAGER_URL = process.env.REACT_APP_API_USERMANAGER_URL;
 
 function MessageInbox() {
     const [sessions, setSessions] = useState([]);
@@ -20,7 +21,7 @@ function MessageInbox() {
     useEffect(() => {
         async function fetchSessions() {
             try {
-                const res = await fetch(`${API_BASE_URL}/sessions/user/${user.id}`);
+                const res = await fetch(`${API_MESSAGESERVICE_URL}/sessions/user/${user.id}`);
                 const data = await res.json();
                 setSessions(data);
 
@@ -29,7 +30,7 @@ function MessageInbox() {
                 await Promise.all(
                     data.map(async (session) => {
                         try {
-                            const msgRes = await fetch(`${API_BASE_URL}/messages/latest/session/${session.sessionId}`);
+                            const msgRes = await fetch(`${API_MESSAGESERVICE_URL}/messages/latest/session/${session.sessionId}`);
                             if (msgRes.ok) {
                                 const msg = await msgRes.json();
                                 latestMsgs[session.sessionId] = msg.message;
@@ -58,7 +59,7 @@ function MessageInbox() {
 
         try {
             // Get receiver by email
-            const receiverRes = await fetch(`${API_BASE_URL}/users/email/${encodeURIComponent(receiverEmail)}`);
+            const receiverRes = await fetch(`${API_USERMANAGER_URL}/users/email/${encodeURIComponent(receiverEmail)}`);
             if (!receiverRes.ok) throw new Error("Receiver not found");
             const receiver = await receiverRes.json();
 
@@ -68,7 +69,7 @@ function MessageInbox() {
                 subject: subject
             };
 
-            const createRes = await fetch(`${API_BASE_URL}/sessions`, {
+            const createRes = await fetch(`${API_MESSAGESERVICE_URL}/sessions`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(sessionCreateDTO)
