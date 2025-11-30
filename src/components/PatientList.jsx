@@ -3,13 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import "./DoctorPatient.css";
 import { useAuth } from "../context/AuthContext";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 
 function PatientList() {
-    const user = JSON.parse(sessionStorage.getItem("user"));
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
 
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,66 +17,36 @@ function PatientList() {
     const [searchResults, setSearchResults] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
 
-    // Fetch doctor’s patients if user is a doctor
     useEffect(() => {
-        if (!user || (user.userType !== "Doctor" && user.userType !== "OtherStaff")) {
-            setError("You must be logged in as a doctor or staff.");
-            setLoading(false);
-            return;
-        }
+        const fetchPatientsForDoctor = async () => {
+            if (!user || !user.id) return;
+
+            setLoading(true);
+            try {
+                const response = await fetch(`${API_SEARCHSERVICE_URL}/search/patients/practitioner/id/${user.id}`);
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch patients");
+                }
+
+                const data = await response.json();
+                setPatients(data);
+            } catch (err) {
+                console.error("Error fetching patients:", err);
+                setError("Could not load patient list.");
+            } finally {
+                setLoading(false);
+            }
+        };
 
         if (user.userType === "Doctor") {
-            (async () => {
-                try {
-                    const [encRes, condRes, obsRes] = await Promise.all([
-                        fetch(`${API_BASE_URL}/encounters/practitioner/${user.id}`),
-                        fetch(`${API_BASE_URL}/conditions/practitioner/${user.id}`),
-                        fetch(`${API_BASE_URL}/observations/practitioner/${user.id}`)
-                    ]);
-
-                    if (!encRes.ok || !condRes.ok || !obsRes.ok) {
-                        throw new Error("Failed to load doctor-related data.");
-                    }
-
-                    const [encounters, conditions, observations] = await Promise.all([
-                        encRes.json(),
-                        condRes.json(),
-                        obsRes.json()
-                    ]);
-
-                    const allIds = [
-                        ...encounters.map(e => e.patientId),
-                        ...conditions.map(c => c.patientId),
-                        ...observations.map(o => o.patientId)
-                    ];
-                    const uniqueIds = [...new Set(allIds)];
-
-                    if (uniqueIds.length === 0) {
-                        setPatients([]);
-                        return;
-                    }
-
-                    const fetchedPatients = await Promise.all(
-                        uniqueIds.map(id =>
-                            fetch(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=false`).then(r => r.json())
-                        )
-                    );
-
-                    fetchedPatients.sort((a, b) => a.fullName.localeCompare(b.fullName));
-                    setPatients(fetchedPatients);
-
-                } catch (err) {
-                    console.error(err);
-                    setError(err.message);
-                } finally {
-                    setLoading(false);
-                }
-            })();
+            fetchPatientsForDoctor();
         } else {
-            // OtherStaff doesn’t have “connected patients”
             setLoading(false);
         }
-    }, [user]);
+
+    }, [user.id, user.userType]);
+
 
     // Handle search input (both doctors and other staff)
     useEffect(() => {

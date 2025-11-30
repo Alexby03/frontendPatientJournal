@@ -78,29 +78,45 @@ function SearchPage() {
         }
     };
 
-    const searchPatientsByDoctorEmail = async () => {
+    const searchPatientsByDoctorEmail = async (e) => {
+        e.preventDefault();
+
         if (!practitionerEmail) return;
 
         setLoading(true);
-        try {
+        setError("");
+        setResults([]);
 
+        try {
             const doctorRes = await fetch(`${API_SEARCHSERVICE_URL}/search/practitioner/email/${encodeURIComponent(practitionerEmail)}`);
-            //if (!doctorRes.ok) return setResults([]);
+            if (!doctorRes.ok) {
+
+                setError("No practitioner found with that email.");
+                setLoading(false);
+                return;
+            }
 
             const doctor = await doctorRes.json();
-            //if (!doctor?.id) return setResults([]);
 
+            if (!doctor || !doctor.id) {
+                setError("Invalid practitioner data received.");
+                setLoading(false);
+                return;
+            }
 
             const patientsRes = await fetch(`${API_SEARCHSERVICE_URL}/search/patients/practitioner/id/${doctor.id}`);
-            //if (!patientsRes.ok) return setResults([]);
+
+            if (!patientsRes.ok) {
+                throw new Error("Failed to fetch patients list.");
+            }
 
             const patients = await patientsRes.json();
 
+            setResults(patients);
 
-            setResults(Array.isArray(patients) ? patients : [patients]);
         } catch (err) {
-            console.error("Error fetching patients by doctor email:", err);
-            setResults([]);
+            console.error("Search error:", err);
+            setError("An error occurred while searching.");
         } finally {
             setLoading(false);
         }
