@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"; // import AuthContext hook
 import "./PatientDetail.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 
 function PatientDetail() {
     const navigate = useNavigate();
@@ -18,7 +18,7 @@ function PatientDetail() {
     useEffect(() => {
         const fetchPatientData = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/patients/email/${email}?fetchRelations=true`);
+                const res = await fetch(`${API_SEARCHSERVICE_URL}/search/patient/email/${email}?eager=true`);
                 if (!res.ok) throw new Error("Could not fetch patient data");
                 const data = await res.json();
                 setPatientData(data);

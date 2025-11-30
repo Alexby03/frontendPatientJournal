@@ -6,6 +6,7 @@ import Register from "./components/Register";
 import StaffPatient from "./components/StaffPatient";
 import PatientDetail from "./components/PatientDetail";
 import PatientList from "./components/PatientList";
+import SearchPage from "./components/SearchPage";
 import DoctorPatientDetail from "./components/DoctorPatientDetail";
 import MessageInbox from "./components/MessageInbox";
 import ConditionForm from "./components/ConditionForm";
@@ -44,6 +45,15 @@ function App() {
                         element={
                             <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
                                 <PatientList />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/doctor/search"
+                        element={
+                            <ProtectedRoute allowed={["Doctor"]}>
+                                <SearchPage />
                             </ProtectedRoute>
                         }
                     />

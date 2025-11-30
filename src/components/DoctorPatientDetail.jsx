@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "./PatientDetail.css";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 
 function DoctorPatientDetail() {
     const { id } = useParams(); // patientId
@@ -16,7 +17,7 @@ function DoctorPatientDetail() {
     useEffect(() => {
         const fetchPatientData = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/patients/${id}?fetchRelations=true`);
+                const res = await fetch(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=true`);
                 if (!res.ok) throw new Error("Could not fetch patient data");
                 const data = await res.json();
                 setPatientData(data);
@@ -70,7 +71,7 @@ function DoctorPatientDetail() {
             if (!res.ok) throw new Error(`${type} could not be deleted`);
             alert(`${type} deleted successfully`);
             // Refresh patient data
-            const refresh = await fetch(`${API_BASE_URL}/patients/${id}?fetchRelations=true`);
+            const refresh = await fetch(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=true`);
             const refreshedData = await refresh.json();
             setPatientData(refreshedData);
         } catch (err) {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./PatientDetail.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 
 function StaffPatient() {
     const { id } = useParams(); // patientId
@@ -16,7 +16,7 @@ function StaffPatient() {
     useEffect(() => {
         const fetchPatient = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/patients/${id}?fetchRelations=false`);
+                const res = await fetch(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=true`);
                 if (!res.ok) throw new Error("Failed to fetch patient info");
                 const data = await res.json();
                 setPatient(data);

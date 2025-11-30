@@ -4,6 +4,7 @@ import "./DoctorPatient.css";
 import { useAuth } from "../context/AuthContext";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 
 function PatientList() {
     const user = JSON.parse(sessionStorage.getItem("user"));
@@ -59,7 +60,7 @@ function PatientList() {
 
                     const fetchedPatients = await Promise.all(
                         uniqueIds.map(id =>
-                            fetch(`${API_BASE_URL}/patients/${id}?fetchRelations=false`).then(r => r.json())
+                            fetch(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=false`).then(r => r.json())
                         )
                     );
 
@@ -89,7 +90,7 @@ function PatientList() {
         const fetchSearchResults = async () => {
             setSearchLoading(true);
             try {
-                const res = await fetch(`${API_BASE_URL}/patients/search?q=${encodeURIComponent(searchQuery)}&pageIndex=0&pageSize=10&fetchRelations=false`);
+                const res = await fetch(`${API_SEARCHSERVICE_URL}/search/patients/name/${encodeURIComponent(searchQuery)}?pageIndex=0&pageSize=10&eager=false`);
                 if (res.ok) {
                     const data = await res.json();
                     setSearchResults(data);
@@ -116,6 +117,7 @@ function PatientList() {
             {/* Taskbar */}
             <div className="taskbar" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between" }}>
                 <button onClick={() => navigate("/messages")} style={{ padding: "8px 16px", cursor: "pointer" }}>Conversations</button>
+                <button onClick={() => navigate("/doctor/search")} style={{ padding: "8px 16px", cursor: "pointer" }}>Search patients</button>
                 <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "8px 16px", cursor: "pointer" }}>Logout</button>
             </div>
 

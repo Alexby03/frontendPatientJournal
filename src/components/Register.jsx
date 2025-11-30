@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginForm.css"; // återanvänd CSS från login
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_USERMANAGER_URL = process.env.REACT_APP_API_USERMANAGER_URL;
 
 function Register() {
     const [email, setEmail] = useState("");
@@ -25,7 +25,7 @@ function Register() {
                 userType: "Patient" // alltid patient
             };
 
-            const response = await fetch(`${API_BASE_URL}/patients`, {
+            const response = await fetch(`${API_USERMANAGER_URL}/users/patients`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
