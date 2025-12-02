@@ -86,6 +86,7 @@ function PatientList() {
             <div className="taskbar" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between" }}>
                 <button onClick={() => navigate("/messages")} style={{ padding: "8px 16px", cursor: "pointer" }}>Conversations</button>
                 <button onClick={() => navigate("/doctor/search")} style={{ padding: "8px 16px", cursor: "pointer" }}>Search patients</button>
+                <button onClick={() => navigate("/doctor/my-images")} style={{ padding: "8px 16px", cursor: "pointer" }}>My Images</button>
                 <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "8px 16px", cursor: "pointer" }}>Logout</button>
             </div>
 

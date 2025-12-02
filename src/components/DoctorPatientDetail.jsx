@@ -94,6 +94,7 @@ function DoctorPatientDetail() {
             <div className="taskbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px" }}>
                 <div>
                     <button className="btn btn-back" onClick={() => navigate(`/doctor/patients`)}>Back</button>
+                    
                     <button className="btn btn-logout" onClick={logout}>Logout</button>
                 </div>
             </div>

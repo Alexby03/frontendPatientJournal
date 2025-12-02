@@ -1,0 +1,140 @@
+/* --- TASKBAR --- */
+.taskbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+/* --- MAIN CONTAINER --- */
+.patient-images-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #f7f7ff, #e6e6ff);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* --- TITLE --- */
+.patient-images-container h2 {
+    color: #6c63ff;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+/* --- BUTTONS --- */
+.top-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.top-buttons button {
+    background-color: #6c63ff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.top-buttons button:hover {
+    background-color: #5750d6;
+    transform: translateY(-2px);
+}
+
+/* --- TABLE --- */
+.images-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+}
+
+.images-table th,
+.images-table td {
+    padding: 12px 15px;
+    text-align: left;
+}
+
+.images-table th {
+    background-color: #6c63ff;
+    color: white;
+    font-weight: bold;
+}
+
+.images-table tr:nth-child(even) {
+    background-color: #f2f2ff;
+}
+
+.images-table tr:hover {
+    background-color: #e0e0ff;
+}
+
+.images-table img {
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* --- CANVAS EDITOR --- */
+.canvas-editor {
+    margin-top: 20px;
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.canvas-editor h3 {
+    color: #5750d6;
+    margin-bottom: 10px;
+}
+
+.canvas-editor canvas {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+/* Canvas control buttons */
+.canvas-controls {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.canvas-controls button {
+    background-color: #6c63ff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.canvas-controls button:hover {
+    background-color: #5750d6;
+    transform: translateY(-2px);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .top-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .canvas-controls {
+        flex-direction: column;
+    }
+
+    .images-table th,
+    .images-table td {
+        padding: 8px 10px;
+    }
+}
