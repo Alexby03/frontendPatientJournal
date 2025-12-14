@@ -10,6 +10,7 @@ ENV REACT_APP_API_USERMANAGER_URL=/service/users
 ENV REACT_APP_API_MESSAGESERVICE_URL=/service/messages
 ENV REACT_APP_API_SEARCHSERVICE_URL=/service/search
 ENV REACT_APP_API_IMAGEEDITOR_URL=/service/images
+ENV REACT_APP_WEBSOCKET_URL=ws://localhost:8087/ws/messages
 RUN npm run build
 
 

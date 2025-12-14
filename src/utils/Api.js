@@ -1,18 +1,24 @@
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "react-oidc-context";
+import { useCallback } from 'react'; // <--- Import this
 
 export function useApi() {
-    const { token } = useAuth();
+    const auth = useAuth();
 
-    const apiFetch = async (url, options = {}) => {
-        return fetch(url, {
-            ...options,
-            headers: {
-                ...(options.headers || {}),
-                "Authorization": token ? `Bearer ${token}` : "",
-                "Content-Type": "application/json",
-            }
-        });
-    };
+    const request = useCallback(async (url, options = {}) => {
+        const token = auth.user?.access_token;
 
-    return { apiFetch };
+        const headers = {
+            ...(options.headers || {}),
+            ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        };
+
+        if (!headers["Content-Type"] && !(options.body instanceof FormData)) {
+            headers["Content-Type"] = "application/json";
+        }
+
+        return fetch(url, { ...options, headers });
+
+    }, [auth.user?.access_token]);
+
+    return { request };
 }

@@ -1,34 +1,48 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./PatientDetail.css";
+import { useApi } from "../utils/Api";
+import { useAuth } from "react-oidc-context";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 
 function DoctorPatientDetail() {
-    const { id } = useParams(); // patientId
+    const { id } = useParams();
     const navigate = useNavigate();
-    const user = JSON.parse(sessionStorage.getItem("user"));
+    const { request } = useApi();
 
     const [patientData, setPatientData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const auth = useAuth();
+
+    const hasFetched = React.useRef(false); // Lägg till denna
 
     useEffect(() => {
+        if (auth.isLoading || !auth.user) {
+            return;
+        }
+
         const fetchPatientData = async () => {
             try {
-                const res = await fetch(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=true`);
-                if (!res.ok) throw new Error("Could not fetch patient data");
+                const res = await request(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=true`);
+
+                if (!res.ok) throw new Error("Fetch failed");
+
                 const data = await res.json();
+
                 setPatientData(data);
             } catch (err) {
+                console.error("Fetch error:", err);
                 setError(err.message);
             } finally {
                 setLoading(false);
             }
         };
+
         if (id) fetchPatientData();
-    }, [id]);
+    }, [id, auth.isLoading, auth.user]);
 
     const formatDate = (dateStr) => {
         if (!dateStr) return "";
@@ -67,11 +81,11 @@ function DoctorPatientDetail() {
         }
 
         try {
-            const res = await fetch(url, { method: "DELETE" });
+            const res = await request(url, { method: "DELETE" });
             if (!res.ok) throw new Error(`${type} could not be deleted`);
             alert(`${type} deleted successfully`);
             // Refresh patient data
-            const refresh = await fetch(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=true`);
+            const refresh = await request(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=true`);
             const refreshedData = await refresh.json();
             setPatientData(refreshedData);
         } catch (err) {
@@ -80,8 +94,7 @@ function DoctorPatientDetail() {
     };
 
     const logout = () => {
-        sessionStorage.clear();
-        navigate("/login");
+        auth.signoutRedirect()
     };
 
     if (loading) return <p className="loading">Loading patient data...</p>;

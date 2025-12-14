@@ -175,3 +175,17 @@
     margin-top: 3px;
     text-align: right;
 }
+
+.alert-dot {
+    display: inline-block;
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 50%;
+    margin-left: 8px;
+}

@@ -1,13 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "react-oidc-context";
+import { useNotifications } from "../context/NotificationContext";
 import "./DoctorPatient.css";
-import { useAuth } from "../context/AuthContext";
+import { useApi } from "../utils/Api";
 
 const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 
 function PatientList() {
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const auth = useAuth(); // Används för user info och logout
+    const { request } = useApi();
+    const { hasNewMessages, clearNotifications } = useNotifications();
+
+    // Hämta data från auth-objektet säkert
+    const userProfile = auth.user?.profile;
+    const keycloakId = userProfile?.sub;
+
+    // Logik för att avgöra om man är doktor
+    const roles = userProfile?.realm_access?.roles || [];
+    const email = userProfile?.email || "";
+    const isDoctor = roles.includes("doctor") || roles.includes("Doctor") || email.includes("doctor");
 
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -17,20 +30,30 @@ function PatientList() {
     const [searchResults, setSearchResults] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
 
+    // 1. Fetch Patients (Mina patienter)
     useEffect(() => {
-        const fetchPatientsForDoctor = async () => {
-            if (!user || !user.id) return;
+        if (!keycloakId || !auth.isAuthenticated) return;
 
+        if (!isDoctor) {
+            setLoading(false);
+            return;
+        }
+
+        const fetchPatientsForDoctor = async () => {
             setLoading(true);
             try {
-                const response = await fetch(`${API_SEARCHSERVICE_URL}/search/patients/practitioner/id/${user.id}`);
+                const response = await request(`${API_SEARCHSERVICE_URL}/search/patients/practitioner/id/${keycloakId}`);
 
                 if (!response.ok) {
-                    throw new Error("Failed to fetch patients");
+                    if (response.status === 404) {
+                        setPatients([]);
+                    } else {
+                        throw new Error("Failed to fetch patients");
+                    }
+                } else {
+                    const data = await response.json();
+                    setPatients(data);
                 }
-
-                const data = await response.json();
-                setPatients(data);
             } catch (err) {
                 console.error("Error fetching patients:", err);
                 setError("Could not load patient list.");
@@ -39,16 +62,12 @@ function PatientList() {
             }
         };
 
-        if (user.userType === "Doctor") {
-            fetchPatientsForDoctor();
-        } else {
-            setLoading(false);
-        }
+        fetchPatientsForDoctor();
 
-    }, [user.id, user.userType]);
+    }, [keycloakId, isDoctor, auth.isAuthenticated]);
 
 
-    // Handle search input (both doctors and other staff)
+    // 2. Search Logic (Debounced) - För snabbsökningen längst ner
     useEffect(() => {
         if (!searchQuery) {
             setSearchResults([]);
@@ -58,7 +77,7 @@ function PatientList() {
         const fetchSearchResults = async () => {
             setSearchLoading(true);
             try {
-                const res = await fetch(`${API_SEARCHSERVICE_URL}/search/patients/name/${encodeURIComponent(searchQuery)}?pageIndex=0&pageSize=10&eager=false`);
+                const res = await request(`${API_SEARCHSERVICE_URL}/search/patients/name/${encodeURIComponent(searchQuery)}?pageIndex=0&pageSize=10&eager=false`);
                 if (res.ok) {
                     const data = await res.json();
                     setSearchResults(data);
@@ -77,6 +96,11 @@ function PatientList() {
         return () => clearTimeout(debounceTimeout);
     }, [searchQuery]);
 
+    // Helpers
+    const handleLogout = () => {
+        auth.signoutRedirect();
+    };
+
     if (loading) return <p className="loading">Loading patients...</p>;
     if (error) return <p className="error-message">{error}</p>;
 
@@ -84,16 +108,32 @@ function PatientList() {
         <div className="doctor-container">
             {/* Taskbar */}
             <div className="taskbar" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between" }}>
-                <button onClick={() => navigate("/messages")} style={{ padding: "8px 16px", cursor: "pointer" }}>Conversations</button>
-                <button onClick={() => navigate("/doctor/search")} style={{ padding: "8px 16px", cursor: "pointer" }}>Search patients</button>
-                <button onClick={() => navigate("/doctor/my-images")} style={{ padding: "8px 16px", cursor: "pointer" }}>My Images</button>
-                <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "8px 16px", cursor: "pointer" }}>Logout</button>
+                <div>
+                    <button onClick={() => {navigate("/messages"); clearNotifications(); }} style={{ padding: "8px 16px", cursor: "pointer", marginRight: "10px" }}>
+                        Conversations {hasNewMessages && <span className="alert-dot">!</span>}
+                    </button>
+
+                    {/* HÄR ÄR DEN ÅTERSTÄLLDA KNAPPEN */}
+                    <button onClick={() => navigate("/doctor/search")} style={{ padding: "8px 16px", cursor: "pointer", marginRight: "10px" }}>
+                        Search patients
+                    </button>
+
+                    <button onClick={() => navigate("/doctor/my-images")} style={{ padding: "8px 16px", cursor: "pointer" }}>
+                        My Images
+                    </button>
+                </div>
+
+                <button onClick={handleLogout} style={{ padding: "8px 16px", cursor: "pointer", backgroundColor: "#dc3545", color: "white" }}>
+                    Logout
+                </button>
             </div>
 
-            <div className="doctor-name">{user.fullName}</div>
+            <div className="doctor-name">
+                Welcome, {userProfile?.name || "Doctor"}
+            </div>
 
             {/* ONLY show this section if user is a Doctor */}
-            {user.userType === "Doctor" && (
+            {isDoctor && (
                 <div className="patient-section-container">
                     <div className="sub-title">Your Patients</div>
 
@@ -102,9 +142,9 @@ function PatientList() {
                     ) : (
                         <div className="patient-grid">
                             {patients.map(p => (
-                                <div className="patient-card" key={p.id}>
+                                <div className="patient-card" key={p.id || p.patientId}>
                                     <Link
-                                        to={`/doctor/patient/${p.id}`}
+                                        to={`/doctor/patient/${p.id || p.patientId}`}
                                         className="patient-name"
                                     >
                                         {p.fullName}
@@ -116,31 +156,30 @@ function PatientList() {
                 </div>
             )}
 
-            {/* Search bar for both Doctor and OtherStaff */}
+            {/* Quick Search bar (längst ner) */}
             <div className="patient-section-container">
-                <div className="patient-search-container">
+                <h3>Quick Search</h3>
+                <div className="patient-search-container" style={{position: "relative"}}>
                     <input
                         type="text"
-                        placeholder="Search for a patient..."
+                        placeholder="Search by name..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="patient-search-input"
+                        style={{width: "100%", padding: "8px"}}
                     />
-                    {searchLoading && <div className="search-loading">Loading...</div>}
+                    {searchLoading && <div className="search-loading" style={{position: "absolute", right: 10, top: 10}}>Loading...</div>}
+
                     {searchResults.length > 0 && (
-                        <ul className="search-dropdown">
+                        <ul className="search-dropdown" style={{border: "1px solid #ccc", listStyle: "none", padding: 0, marginTop: 5, backgroundColor: "white", zIndex: 100}}>
                             {searchResults.map(p => (
                                 <li
                                     key={p.id}
-                                    onClick={() =>
-                                        navigate(
-                                            user.userType === "OtherStaff"
-                                                ? `/staff/patient/${p.id}`
-                                                : `/doctor/patient/${p.id}`
-                                        )
-                                    }
+                                    style={{padding: "10px", cursor: "pointer", borderBottom: "1px solid #eee"}}
+                                    onClick={() => navigate(`/doctor/patient/${p.id}`)}
                                 >
-                                    {p.fullName} ({p.email})
+                                    <strong>{p.fullName}</strong> <br/>
+                                    <small>{p.email}</small>
                                 </li>
                             ))}
                         </ul>

@@ -1,22 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./PatientDetail.css";
+import {useApi} from "../utils/Api";
 
 const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 
 function StaffPatient() {
     const { id } = useParams(); // patientId
     const navigate = useNavigate();
-    const user = JSON.parse(sessionStorage.getItem("user"));
 
     const [patient, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const { request } = useApi();
+
     useEffect(() => {
         const fetchPatient = async () => {
             try {
-                const res = await fetch(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=true`);
+                const res = await request(`${API_SEARCHSERVICE_URL}/search/patient/id/${id}?eager=true`);
                 if (!res.ok) throw new Error("Failed to fetch patient info");
                 const data = await res.json();
                 setPatient(data);
@@ -28,7 +30,7 @@ function StaffPatient() {
         };
 
         fetchPatient();
-    }, [id]);
+    }, [id, request]);
 
     const logout = () => {
         sessionStorage.clear();

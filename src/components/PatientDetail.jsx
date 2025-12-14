@@ -1,78 +1,118 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // import AuthContext hook
+import { useAuth } from "react-oidc-context";
 import "./PatientDetail.css";
+import { useApi } from "../utils/Api";
+import { useNotifications } from "../context/NotificationContext";
 
 const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
+const API_USERMANAGER_URL = process.env.REACT_APP_API_USERMANAGER_URL;
 
 function PatientDetail() {
     const navigate = useNavigate();
-    const { logout } = useAuth(); // get logout from context
-    const user = JSON.parse(sessionStorage.getItem("user"));
-    const { fullName, email } = user || {};
+    const auth = useAuth();
+    const { request } = useApi();
+
+    const { hasNewMessages, clearNotifications } = useNotifications();
+
+    const email = auth.user?.profile?.email;
+    const fullName = auth.user?.profile?.name || "Okänd Användare";
+    const keycloakId = auth.user?.profile?.sub;
 
     const [patientData, setPatientData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [isSyncing, setIsSyncing] = useState(false);
 
     useEffect(() => {
-        const fetchPatientData = async () => {
+        if (!auth.user?.access_token || !email) {
+            if (!auth.isLoading) setLoading(false);
+            return;
+        }
+
+        const fetchOrSyncUser = async () => {
             try {
-                const res = await fetch(`${API_SEARCHSERVICE_URL}/search/patient/email/${email}?eager=true`);
-                if (!res.ok) throw new Error("Could not fetch patient data");
-                const data = await res.json();
-                setPatientData(data);
+                const isDoctor = email.toLowerCase().includes("doctor") || email.toLowerCase().includes("dr");
+
+                if (isDoctor) {
+                    navigate("/doctor/messages");
+                    return;
+                }
+
+                const res = await request(`${API_SEARCHSERVICE_URL}/search/patient/email/${email}?eager=true`);
+
+                if (res.ok) {
+                    const data = await res.json();
+                    setPatientData(data);
+                    setLoading(false);
+                } else {
+                    setTimeout(async () => {
+                        const retryRes = await request(`${API_SEARCHSERVICE_URL}/search/patient/email/${email}?eager=true`);
+                        if (retryRes.ok) {
+                            const retryData = await retryRes.json();
+                            setPatientData(retryData);
+                        } else {
+                            setError("User created but could not be fetched.");
+                        }
+                        setLoading(false);
+                        setIsSyncing(false);
+                    }, 500);
+                }
             } catch (err) {
+                console.error(err);
                 setError(err.message);
-            } finally {
                 setLoading(false);
             }
         };
+        fetchOrSyncUser();
+    }, [email, auth.user?.access_token]);
 
-        if (email) fetchPatientData();
-    }, [email]);
+    const handleLogout = () => {
+        auth.signoutRedirect();
+    };
 
-    if (loading) return <p className="loading">Loading patient data...</p>;
-    if (error) return <p className="error-message">{error}</p>;
-    if (!patientData) return null;
+    const handleConversationsClick = () => {
+        clearNotifications();
+        navigate("/messages");
+    };
 
-    // Helper functions
     const formatDate = (dateStr) => {
         if (!dateStr) return "";
-        const date = new Date(dateStr);
-        return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+        return new Date(dateStr).toLocaleDateString();
     };
-
     const formatDateTime = (dateStr) => {
         if (!dateStr) return "";
-        const date = new Date(dateStr);
-        return date.toLocaleString(undefined, {
-            year: "numeric", month: "short", day: "numeric",
-            hour: "2-digit", minute: "2-digit"
-        });
+        return new Date(dateStr).toLocaleString();
     };
+
+    if (loading) return <p className="loading">Loading profile...</p>;
+    if (error) return <p className="error-message">{error}</p>;
+    if (!patientData) return <div className="loading">Creating your profile...</div>;
 
     return (
         <div className="patient-container">
-            {/* Taskbar with Conversations and Logout */}
-            <div
-                className="taskbar"
-                style={{
-                    marginBottom: "20px",
-                    display: "flex",
-                    justifyContent: "space-between"
-                }}
-            >
+            <div className="taskbar" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between" }}>
+
+                {/* 3. Button with FIXED Dot Logic */}
                 <button
-                    onClick={() => navigate("/messages")}
-                    style={{ padding: "8px 16px", cursor: "pointer" }}
+                    onClick={handleConversationsClick}
+                    style={{
+                        padding: "8px 16px",
+                        cursor: "pointer",
+                        display: "flex",       // Keeps text and dot aligned
+                        alignItems: "center",
+                        gap: "6px"             // Space between text and dot
+                    }}
                 >
                     Conversations
+
+                    {/* RESTORED: The span now contains the "!" and uses the class */}
+                    {hasNewMessages && (
+                        <span className="alert-dot">!</span>
+                    )}
                 </button>
-                <button
-                    onClick={() => { logout(); navigate("/login"); }}
-                    style={{ padding: "8px 16px", cursor: "pointer" }}
-                >
+
+                <button onClick={handleLogout} style={{ padding: "8px 16px", cursor: "pointer", backgroundColor: "#dc3545", color: "white", border: "none" }}>
                     Logout
                 </button>
             </div>
@@ -80,26 +120,17 @@ function PatientDetail() {
             <h1>{patientData.fullName}</h1>
             <p className="email">{patientData.email}</p>
 
-            {/* Conditions Table */}
             <section className="patient-section">
                 <h2>Conditions</h2>
-                {patientData.conditions.length ? (
+                {patientData.conditions?.length ? (
                     <table>
                         <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Severity</th>
-                            <th>Diagnosed Date</th>
-                        </tr>
+                        <tr><th>Name</th><th>Type</th><th>Severity</th><th>Diagnosed Date</th></tr>
                         </thead>
                         <tbody>
                         {patientData.conditions.map((c, index) => (
                             <tr key={index}>
-                                <td>{c.conditionName}</td>
-                                <td>{c.conditionType}</td>
-                                <td>{c.severityLevel}</td>
-                                <td>{formatDate(c.diagnosedDate)}</td>
+                                <td>{c.conditionName}</td><td>{c.conditionType}</td><td>{c.severityLevel}</td><td>{formatDate(c.diagnosedDate)}</td>
                             </tr>
                         ))}
                         </tbody>
@@ -107,10 +138,9 @@ function PatientDetail() {
                 ) : <p>No conditions found.</p>}
             </section>
 
-            {/* Encounters Table */}
             <section className="patient-section">
                 <h2>Encounters</h2>
-                {patientData.encounters.length ? (
+                {patientData.encounters?.length ? (
                     <table>
                         <thead>
                         <tr>
@@ -130,10 +160,9 @@ function PatientDetail() {
                 ) : <p>No encounters found.</p>}
             </section>
 
-            {/* Observations Table */}
             <section className="patient-section">
                 <h2>Observations</h2>
-                {patientData.observations.length ? (
+                {patientData.observations?.length ? (
                     <table>
                         <thead>
                         <tr>

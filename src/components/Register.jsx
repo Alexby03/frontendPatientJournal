@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./LoginForm.css"; // återanvänd CSS från login
+import "./LoginForm.css";
+import {useApi} from "../utils/Api";
 
 const API_USERMANAGER_URL = process.env.REACT_APP_API_USERMANAGER_URL;
 
@@ -11,6 +12,7 @@ function Register() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { request } = useApi();
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -18,14 +20,15 @@ function Register() {
         setError("");
 
         try {
+            const isDoctor = email.toLowerCase().includes("doctor") || email.toLowerCase().includes("dr");
+            const endpoint = isDoctor ? "/users/practitioners" : "/users/patients";
             const payload = {
                 email,
                 fullName,
                 password,
-                userType: "Patient" // alltid patient
+                userType: isDoctor ? "Doctor" : "Patient"
             };
-
-            const response = await fetch(`${API_USERMANAGER_URL}/users/patients`, {
+            const response = await request(`${API_USERMANAGER_URL}${endpoint}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),

@@ -1,37 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import './formStyle.css';
+import {useApi} from "../utils/Api";
+import {useAuth} from "react-oidc-context";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function ConditionForm() {
-    const {id, conditionId} = useParams(); // patientId + optional conditionId
+    const { id, conditionId } = useParams();
     const navigate = useNavigate();
-    const user = JSON.parse(sessionStorage.getItem("user"));
+
+    const auth = useAuth();
+    const { request } = useApi();
 
     const [conditionName, setConditionName] = useState("");
     const [severityLevel, setSeverityLevel] = useState(1);
     const [conditionType, setConditionType] = useState("Infectious");
     const [diagnosedDate, setDiagnosedDate] = useState("");
 
+
+
+    const practitionerId = auth.user?.profile.sub;
+
+    const isStaff = auth.user?.profile?.realm_access?.roles?.includes("OtherStaff");
+
     useEffect(() => {
+        if (auth.isLoading || !auth.user || !auth.isAuthenticated) {
+            return;
+        }
         if (conditionId) {
             const fetchCondition = async () => {
                 try {
-                    const res = await fetch(`${API_BASE_URL}/conditions/${conditionId}`);
+                    const res = await request(`${API_BASE_URL}/conditions/${conditionId}`);
                     if (!res.ok) throw new Error("Failed to fetch condition");
                     const data = await res.json();
                     setConditionName(data.conditionName);
                     setConditionType(data.conditionType);
                     setSeverityLevel(data.severityLevel);
-                    setDiagnosedDate(data.diagnosedDate); // format for date input if needed
+                    setDiagnosedDate(data.diagnosedDate);
                 } catch (err) {
                     alert(err.message);
                 }
             };
             fetchCondition();
         }
-    }, [conditionId]);
+    }, [conditionId, request]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -41,14 +54,14 @@ function ConditionForm() {
             let res;
             if (conditionId) {
                 // Update
-                res = await fetch(`${API_BASE_URL}/conditions/${conditionId}`, {
+                res = await request(`${API_BASE_URL}/conditions/${conditionId}`, {
                     method: "PUT",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify(body),
                 });
             } else {
                 // Create
-                res = await fetch(`${API_BASE_URL}/conditions/patient/${id}/practitioner/${user.id}`, {
+                res = await request(`${API_BASE_URL}/conditions/patient/${id}/practitioner/${practitionerId}`, {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify(body),
@@ -57,7 +70,7 @@ function ConditionForm() {
 
             if (!res.ok) throw new Error(conditionId ? "Failed to update condition" : "Failed to create condition");
 
-            const redirectTo = user.userType === "OtherStaff"
+            const redirectTo = isStaff
                 ? `/staff/patient/${id}`
                 : `/doctor/patient/${id}`;
             navigate(redirectTo);
@@ -66,6 +79,13 @@ function ConditionForm() {
             alert(err.message);
         }
     };
+
+    if (auth.isLoading) {
+        return <div>Loading...</div>;
+    }
+    if (!auth.isAuthenticated) {
+        return <div>Not logged in</div>;
+    }
 
     return (
         <div className="form-container">

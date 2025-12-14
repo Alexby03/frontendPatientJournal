@@ -1,13 +1,21 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "react-oidc-context";
 import "./SearchPage.css";
+import { useApi } from "../utils/Api";
 
 const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 
 function SearchPage() {
     const navigate = useNavigate();
-    const user = JSON.parse(sessionStorage.getItem("user"));
+
+    // Auth Hooks
+    const auth = useAuth();
+    const { request } = useApi();
+
+    // Hämta ID säkert från Keycloak token
+    // (Keycloaks 'sub' claim matchar ditt Practitioner ID i backend om du mappat det rätt i Onboarding)
+    const practitionerId = auth.user?.profile?.sub;
 
     // Search inputs
     const [name, setName] = useState("");
@@ -18,79 +26,124 @@ function SearchPage() {
 
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [error, setError] = useState(""); // Rättat state destrukturering
+
+    // Hjälpmetod för att kolla auth status innan sökning
+    const checkAuth = () => {
+        if (!auth.isAuthenticated || !auth.user) {
+            setError("You must be logged in to search.");
+            return false;
+        }
+        return true;
+    };
 
     const searchName = async () => {
-        if (!name) return;
+        if (!checkAuth() || !name) return;
 
         setLoading(true);
+        setError("");
         try {
-            const res = await fetch(
-                `${API_SEARCHSERVICE_URL}/search/patients/name/${encodeURIComponent(
-                    name
-                )}?pageIndex=0&pageSize=20&eager=false`
+            const res = await request(
+                `${API_SEARCHSERVICE_URL}/search/patients/name/${encodeURIComponent(name)}?pageIndex=0&pageSize=20&eager=false`
             );
-            setResults(res.ok ? await res.json() : []);
+            if (res.ok) {
+                setResults(await res.json());
+            } else {
+                setResults([]);
+            }
+        } catch (err) {
+            console.error(err);
+            setError("Search failed.");
         } finally {
             setLoading(false);
         }
     };
 
     const searchEmail = async () => {
-        if (!email) return;
+        if (!checkAuth() || !email) return;
 
         setLoading(true);
+        setError("");
         try {
-            const res = await fetch(
+            const res = await request(
                 `${API_SEARCHSERVICE_URL}/search/patient/email/${encodeURIComponent(email)}`
             );
-            setResults(res.ok ? [await res.json()] : []);
+            // Eftersom denna endpoint returnerar ETT objekt, lägg det i en array
+            if (res.ok) {
+                const data = await res.json();
+                setResults([data]);
+            } else {
+                setResults([]);
+            }
+        } catch (err) {
+            console.error(err);
+            setError("Search failed.");
         } finally {
             setLoading(false);
         }
     };
 
     const searchCondition = async () => {
-        if (!condition) return;
+        if (!checkAuth() || !condition) return;
 
         setLoading(true);
+        setError("");
         try {
-            const res = await fetch(
+            const res = await request(
                 `${API_SEARCHSERVICE_URL}/search/patients/condition/${condition}`
             );
-            setResults(res.ok ? await res.json() : []);
+            if (res.ok) {
+                setResults(await res.json());
+            } else {
+                setResults([]);
+            }
+        } catch (err) {
+            console.error(err);
+            setError("Search failed.");
         } finally {
             setLoading(false);
         }
     };
 
     const searchPractitionerDate = async () => {
-        if (!date) return;
+        if (!checkAuth() || !date) return;
+
+        // Här använder vi practitionerId från token!
+        if (!practitionerId) {
+            setError("Could not identify your practitioner ID.");
+            return;
+        }
 
         setLoading(true);
+        setError("");
         try {
-            const res = await fetch(
-                `${API_SEARCHSERVICE_URL}/search/patients/practitioner/id/${user.id}/date?localDate=${date}`
+            const res = await request(
+                `${API_SEARCHSERVICE_URL}/search/patients/practitioner/id/${practitionerId}/date?localDate=${date}`
             );
-            setResults(res.ok ? await res.json() : []);
+            if (res.ok) {
+                setResults(await res.json());
+            } else {
+                setResults([]);
+            }
+        } catch (err) {
+            console.error(err);
+            setError("Search failed.");
         } finally {
             setLoading(false);
         }
     };
 
-    const searchPatientsByDoctorEmail = async (e) => {
-        e.preventDefault();
-
-        if (!practitionerEmail) return;
+    const searchPatientsByDoctorEmail = async () => { // Tog bort (e) då knappen inte är i ett <form>
+        if (!checkAuth() || !practitionerEmail) return;
 
         setLoading(true);
         setError("");
         setResults([]);
 
         try {
-            const doctorRes = await fetch(`${API_SEARCHSERVICE_URL}/search/practitioner/email/${encodeURIComponent(practitionerEmail)}`);
+            // 1. Hitta läkaren först
+            const doctorRes = await request(`${API_SEARCHSERVICE_URL}/search/practitioner/email/${encodeURIComponent(practitionerEmail)}`);
             if (!doctorRes.ok) {
-
                 setError("No practitioner found with that email.");
                 setLoading(false);
                 return;
@@ -98,20 +151,23 @@ function SearchPage() {
 
             const doctor = await doctorRes.json();
 
-            if (!doctor || !doctor.id) {
+            // Kolla efter id eller practitionerId beroende på din DTO
+            const docId = doctor.id || doctor.practitionerId;
+
+            if (!docId) {
                 setError("Invalid practitioner data received.");
                 setLoading(false);
                 return;
             }
 
-            const patientsRes = await fetch(`${API_SEARCHSERVICE_URL}/search/patients/practitioner/id/${doctor.id}`);
+            // 2. Hämta patienterna för den läkaren
+            const patientsRes = await request(`${API_SEARCHSERVICE_URL}/search/patients/practitioner/id/${docId}`);
 
             if (!patientsRes.ok) {
                 throw new Error("Failed to fetch patients list.");
             }
 
             const patients = await patientsRes.json();
-
             setResults(patients);
 
         } catch (err) {
@@ -122,6 +178,9 @@ function SearchPage() {
         }
     };
 
+    // UI Render Guard
+    if (auth.isLoading) return <p className="loading">Loading authentication...</p>;
+
     return (
         <div className="search-page">
 
@@ -130,6 +189,8 @@ function SearchPage() {
             </div>
 
             <h2>Search Patients</h2>
+
+            {error && <p className="error-message" style={{color: 'red', textAlign: 'center'}}>{error}</p>}
 
             {/* ---- ALL SEARCH BOXES IN ONE HORIZONTAL ROW ---- */}
             <div className="search-row">
@@ -143,7 +204,7 @@ function SearchPage() {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                     />
-                    <button onClick={searchName}>Search</button>
+                    <button onClick={searchName} disabled={loading}>Search</button>
                 </div>
 
                 {/* ---- SEARCH PATIENT BY EMAIL ---- */}
@@ -155,13 +216,14 @@ function SearchPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
-                    <button onClick={searchEmail}>Search</button>
+                    <button onClick={searchEmail} disabled={loading}>Search</button>
                 </div>
 
                 {/* ---- SEARCH PATIENTS BY CONDITION ---- */}
                 <div className="search-box">
                     <h4>Search by Condition</h4>
                     <select value={condition} onChange={(e) => setCondition(e.target.value)}>
+                        <option value="">Select Condition</option>
                         <option value="Infectious">Infectious</option>
                         <option value="Chronic">Chronic</option>
                         <option value="Genetic">Genetic</option>
@@ -170,30 +232,30 @@ function SearchPage() {
                         <option value="Cancerous">Cancerous</option>
                         <option value="Neurological">Neurological</option>
                     </select>
-                    <button onClick={searchCondition}>Search</button>
+                    <button onClick={searchCondition} disabled={loading}>Search</button>
                 </div>
 
                 {/* ---- PRACTITIONER + DATE ---- */}
                 <div className="search-box">
-                    <h4>Patients you treated at a specific date</h4>
+                    <h4>Patients YOU treated on date</h4>
                     <input
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
                     />
-                    <button onClick={searchPractitionerDate}>Search</button>
+                    <button onClick={searchPractitionerDate} disabled={loading}>Search</button>
                 </div>
 
                 {/* ---- PRACTITIONER + EMAIL ---- */}
                 <div className="search-box">
-                    <h4>Search by Doctor's Email</h4>
+                    <h4>Search by Other Doctor's Email</h4>
                     <input
                         type="email"
                         placeholder="Enter Doctor's email..."
                         value={practitionerEmail}
                         onChange={(e) => setPractitionerEmail(e.target.value)}
                     />
-                    <button onClick={searchPatientsByDoctorEmail}>Search</button>
+                    <button onClick={searchPatientsByDoctorEmail} disabled={loading}>Search</button>
                 </div>
 
             </div>
@@ -202,15 +264,16 @@ function SearchPage() {
             <div className="results-container">
                 <h3>Results</h3>
 
-                {loading && <p>Loading...</p>}
-                {!loading && results.length === 0 && <p>No patients found.</p>}
+                {loading && <p>Loading results...</p>}
+                {!loading && results.length === 0 && <p>No patients found (or no search performed).</p>}
 
                 {results.length > 0 &&
                     results.map((p) => (
                         <div
-                            key={p.id}
+                            key={p.id || p.patientId} // Fallback för olika ID-namn
                             className="result-card"
-                            onClick={() => navigate(`/doctor/patient/${p.id}`)}
+                            onClick={() => navigate(`/doctor/patient/${p.id || p.patientId}`)}
+                            style={{cursor: 'pointer'}}
                         >
                             <strong>{p.fullName}</strong>
                             <div>{p.email}</div>

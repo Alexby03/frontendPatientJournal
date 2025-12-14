@@ -1,103 +1,65 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useAuth } from "react-oidc-context";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-
 import "./LoginForm.css";
 
-const API_USERMANAGER_URL = process.env.REACT_APP_API_USERMANAGER_URL;
-
 function LoginForm() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const auth = useAuth();
     const navigate = useNavigate();
-    const { login } = useAuth();
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
+    useEffect(() => {
+        if (auth.isAuthenticated) {
+            const roles = auth.user?.profile?.realm_access?.roles || [];
 
-        try {
-            const loginPayload = {
-                email: email,
-                password: password
-            };
-
-            const response = await fetch(`${API_USERMANAGER_URL}/users/login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(loginPayload)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Wrong email or password");
+            if (roles.includes("Doctor") || roles.includes("OtherStaff")) {
+                navigate("/doctor/patients");
+            } else if (roles.includes("Patient")) {
+                navigate("/patient/me");
+            } else {
+                navigate("/");
             }
-
-            const userDTO = await response.json();
-            login(userDTO);
-
-            switch (userDTO.userType) {
-                case "Patient":
-                    navigate("/patient/me");
-                    break;
-                case "Doctor":
-                    navigate("/doctor/patients");
-                    break;
-                case "OtherStaff":
-                    navigate("/doctor/patients");
-                    break;
-                default:
-                    navigate("/");
-            }
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
         }
+    }, [auth.isAuthenticated, auth.user, navigate]);
+
+    const handleLogin = () => {
+        auth.signinRedirect();
     };
 
-    const handleRegisterClick = () => {
-        navigate("/register");
+    const handleRegister = () => {
+        auth.signinRedirect({
+            extraQueryParams: {
+                prompt: "create"
+            }
+        });
     };
+
+    if (auth.error) {
+        return (
+            <div className="login-container">
+                <div className="login-card">
+                    <h2>Something went wrong</h2>
+                    <p className="error-message">Login error: {auth.error.message}</p>
+                    <button onClick={handleLogin}>Try again</button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="login-container">
             <div className="login-card">
-                <h2>Welcome to PatientJournal</h2>
+                <h2>PatientJournal</h2>
+                <p>Please log in through the keycloak client below.</p>
 
-                {error && <div className="error-message">{error}</div>}
-
-                <form onSubmit={handleLogin}>
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@example.com"
-                        required
-                    />
-
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Enter your password"
-                        required
-                    />
-
-                    <button type="submit" disabled={loading}>
-                        {loading ? <div className="loader"></div> : "Login"}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+                    <button onClick={handleLogin}>
+                        Log in with SSO
                     </button>
-                </form>
-                <p className="register-text" onClick={handleRegisterClick}>
-                    Sign in
-                </p>
+
+                    <button onClick={handleRegister} className="secondary-button" style={{ backgroundColor: "#6c757d" }}>
+                        Register new account
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -1,34 +1,53 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import './formStyle.css';
+import { useApi } from "../utils/Api";
+import { useAuth } from "react-oidc-context";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function ObservationForm() {
     const { id, observationId } = useParams(); // patientId + optional observationId
     const navigate = useNavigate();
-    const user = JSON.parse(sessionStorage.getItem("user"));
+
+    // Auth Hooks
+    const auth = useAuth();
+    const { request } = useApi();
 
     const [description, setDescription] = useState("");
     const [observationDate, setObservationDate] = useState("");
 
+    // Hämta info från Auth Context
+    const practitionerId = auth.user?.profile?.sub;
+    const isStaff = auth.user?.profile?.realm_access?.roles?.includes("OtherStaff");
+
     useEffect(() => {
+        // Vänta på auth innan vi hämtar något
+        if (auth.isLoading || !auth.user || !auth.isAuthenticated) {
+            return;
+        }
+
         if (observationId) {
             const fetchObservation = async () => {
                 try {
-                    const res = await fetch(`${API_BASE_URL}/observations/${observationId}`);
+                    const res = await request(`${API_BASE_URL}/observations/${observationId}`);
                     if (!res.ok) throw new Error("Failed to fetch observation");
                     const data = await res.json();
+
                     setDescription(data.description);
-                    const localDateTime = new Date(data.observationDate).toISOString().slice(0,16);
-                    setObservationDate(localDateTime);
+
+                    // Format for datetime-local input (YYYY-MM-DDTHH:mm)
+                    if (data.observationDate) {
+                        const localDateTime = new Date(data.observationDate).toISOString().slice(0, 16);
+                        setObservationDate(localDateTime);
+                    }
                 } catch (err) {
                     alert(err.message);
                 }
             };
             fetchObservation();
         }
-    }, [observationId]);
+    }, [observationId, request, auth.isLoading, auth.user, auth.isAuthenticated]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -38,14 +57,15 @@ function ObservationForm() {
             let res;
             if (observationId) {
                 // Update
-                res = await fetch(`${API_BASE_URL}/observations/${observationId}`, {
+                res = await request(`${API_BASE_URL}/observations/${observationId}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(body),
                 });
             } else {
                 // Create
-                res = await fetch(`${API_BASE_URL}/observations/patient/${id}/practitioner/${user.id}`, {
+                // Använd practitionerId från Auth Context
+                res = await request(`${API_BASE_URL}/observations/patient/${id}/practitioner/${practitionerId}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(body),
@@ -54,7 +74,8 @@ function ObservationForm() {
 
             if (!res.ok) throw new Error(observationId ? "Failed to update observation" : "Failed to create observation");
 
-            const redirectTo = user.userType === "OtherStaff"
+            // Redirect baserat på roll
+            const redirectTo = isStaff
                 ? `/staff/patient/${id}`
                 : `/doctor/patient/${id}`;
             navigate(redirectTo);
@@ -63,6 +84,14 @@ function ObservationForm() {
             alert(err.message);
         }
     };
+
+    // Skydda vyn
+    if (auth.isLoading) {
+        return <div className="loading">Loading...</div>;
+    }
+    if (!auth.isAuthenticated) {
+        return <div className="error-message">Not logged in</div>;
+    }
 
     return (
         <div className="form-container">

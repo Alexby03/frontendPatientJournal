@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route} from "react-router-dom"
-import { AuthProvider } from "./context/AuthContext";
+import { AuthWrapper } from "./auth/AuthWrapper";
+import { NotificationProvider } from "./context/NotificationContext";
 
 import LoginForm from "./components/LoginForm";
 import Register from "./components/Register";
@@ -15,149 +16,156 @@ import EncounterForm from "./components/EncounterForm";
 import ObservationForm from "./components/ObservationForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MessageThread from "./components/MessageThread";
+import Onboarding from "./components/Onboarding";
+
 
 function App() {
     return (
-        <AuthProvider>
-            <BrowserRouter>
-                <Routes>
+        <AuthWrapper>
+            <NotificationProvider>
+                <BrowserRouter>
+                    <Routes>
 
-                    {/* Login */}
-                    <Route path="/login" element={<LoginForm />} />
-                    <Route path="/register" element={<Register />} />
+                        {/* Start */}
+                        <Route path="/" element={<Onboarding />} />
 
-                    {/* Message dms and threads */}
-                    <Route path="/messages" element={<MessageInbox />} />
-                    <Route path="/messages/:threadId" element={<MessageThread />} />
+                        {/* Login */}
+                        <Route path="/login" element={<LoginForm />} />
+                        <Route path="/register" element={<Register />} />
 
-                    {/* PATIENT ROUTES */}
-                    <Route
-                        path="/patient/me"
-                        element={
-                            <ProtectedRoute allowed={["Patient"]}>
-                                <PatientDetail />
-                            </ProtectedRoute>
-                        }
-                    />
+                        {/* Message dms and threads */}
+                        <Route path="/messages" element={<MessageInbox />} />
+                        <Route path="/messages/:threadId" element={<MessageThread />} />
 
-                    {/* DOCTOR / STAFF ROUTES */}
-                    <Route
-                        path="/doctor/patients"
-                        element={
-                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
-                                <PatientList />
-                            </ProtectedRoute>
-                        }
-                    />
+                        {/* PATIENT ROUTES */}
+                        <Route
+                            path="/patient/me"
+                            element={
+                                <ProtectedRoute allowed={["Patient"]}>
+                                    <PatientDetail />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/doctor/search"
-                        element={
-                            <ProtectedRoute allowed={["Doctor"]}>
-                                <SearchPage />
-                            </ProtectedRoute>
-                        }
-                    />
+                        {/* DOCTOR / STAFF ROUTES */}
+                        <Route
+                            path="/doctor/patients"
+                            element={
+                                <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                    <PatientList />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/doctor/my-images"
-                        element={
-                            <ProtectedRoute allowed={["Doctor"]}>
-                                <PatientImages />
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/doctor/search"
+                            element={
+                                <ProtectedRoute allowed={["Doctor"]}>
+                                    <SearchPage />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/staff/patient/:id"
-                        element={
-                            <ProtectedRoute allowed={["OtherStaff"]}>
-                                <StaffPatient />
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/doctor/my-images"
+                            element={
+                                <ProtectedRoute allowed={["Doctor"]}>
+                                    <PatientImages />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/doctor/patient/:id"
-                        element={
-                            <ProtectedRoute allowed={["Doctor"]}>
-                                <DoctorPatientDetail />
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/staff/patient/:id"
+                            element={
+                                <ProtectedRoute allowed={["OtherStaff"]}>
+                                    <StaffPatient />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/doctor/messages"
-                        element={
-                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
-                                <MessageInbox />
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/doctor/patient/:id"
+                            element={
+                                <ProtectedRoute allowed={["Doctor"]}>
+                                    <DoctorPatientDetail />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    {/* ADD NEW CONDITION / ENCOUNTER / OBSERVATION */}
-                    <Route
-                        path="/doctor/patient/:id/add-condition"
-                        element={
-                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
-                                <ConditionForm />
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/doctor/messages"
+                            element={
+                                <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                    <MessageInbox />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/doctor/patient/:id/add-encounter"
-                        element={
-                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
-                                <EncounterForm />
-                            </ProtectedRoute>
-                        }
-                    />
+                        {/* ADD NEW CONDITION / ENCOUNTER / OBSERVATION */}
+                        <Route
+                            path="/doctor/patient/:id/add-condition"
+                            element={
+                                <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                    <ConditionForm />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/doctor/patient/:id/add-observation"
-                        element={
-                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
-                                <ObservationForm />
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/doctor/patient/:id/add-encounter"
+                            element={
+                                <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                    <EncounterForm />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    {/* UPDATE CONDITION / ENCOUNTER / OBSERVATION */}
-                    <Route
-                        path="/doctor/patient/:id/update-condition/:conditionId"
-                        element={
-                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
-                                <ConditionForm/>
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/doctor/patient/:id/add-observation"
+                            element={
+                                <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                    <ObservationForm />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/doctor/patient/:id/update-encounter/:encounterId"
-                        element={
-                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
-                                <EncounterForm />
-                            </ProtectedRoute>
-                        }
-                    />
+                        {/* UPDATE CONDITION / ENCOUNTER / OBSERVATION */}
+                        <Route
+                            path="/doctor/patient/:id/update-condition/:conditionId"
+                            element={
+                                <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                    <ConditionForm/>
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/doctor/patient/:id/update-observation/:observationId"
-                        element={
-                            <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
-                                <ObservationForm />
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/doctor/patient/:id/update-encounter/:encounterId"
+                            element={
+                                <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                    <EncounterForm />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/doctor/patient/:id/update-observation/:observationId"
+                            element={
+                                <ProtectedRoute allowed={["Doctor", "OtherStaff"]}>
+                                    <ObservationForm />
+                                </ProtectedRoute>
+                            }
+                        />
 
 
-                    {/* DEFAULT / HOMEPAGE */}
-                    <Route path="/" element={<LoginForm />} />
+                        {/* DEFAULT / HOMEPAGE */}
+                        <Route path="/" element={<LoginForm />} />
 
-                </Routes>
-            </BrowserRouter>
-        </AuthProvider>
+                    </Routes>
+                </BrowserRouter>
+            </NotificationProvider>
+        </AuthWrapper>
     );
 }
 
