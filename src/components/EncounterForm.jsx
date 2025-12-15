@@ -10,7 +10,6 @@ function EncounterForm() {
     const { id, encounterId } = useParams(); // patientId + optional encounterId
     const navigate = useNavigate();
 
-    // Auth Hooks
     const auth = useAuth();
     const { request } = useApi();
 
@@ -21,7 +20,6 @@ function EncounterForm() {
     const isStaff = auth.user?.profile?.realm_access?.roles?.includes("OtherStaff");
 
     useEffect(() => {
-        // Vänta på auth
         if (auth.isLoading || !auth.user || !auth.isAuthenticated) {
             return;
         }
@@ -35,7 +33,6 @@ function EncounterForm() {
 
                     setDescription(data.description);
 
-                    // Format for datetime-local input (YYYY-MM-DDTHH:mm)
                     if (data.encounterDate) {
                         const localDateTime = new Date(data.encounterDate).toISOString().slice(0, 16);
                         setEncounterDate(localDateTime);
@@ -63,7 +60,6 @@ function EncounterForm() {
                 });
             } else {
                 // Create
-                // Använd practitionerId från auth, inte från sessionStorage!
                 res = await request(`${API_BASE_URL}/encounters/patient/${id}/practitioner/${practitionerId}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -73,7 +69,6 @@ function EncounterForm() {
 
             if (!res.ok) throw new Error(encounterId ? "Failed to update encounter" : "Failed to create encounter");
 
-            // Redirect baserat på roll (samma logik som ConditionForm)
             const redirectTo = isStaff
                 ? `/staff/patient/${id}`
                 : `/doctor/patient/${id}`;
@@ -84,7 +79,6 @@ function EncounterForm() {
         }
     };
 
-    // Skydda vyn medan auth laddar eller om man är utloggad
     if (auth.isLoading) {
         return <div className="loading">Loading...</div>;
     }

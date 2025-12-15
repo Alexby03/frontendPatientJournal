@@ -1,5 +1,5 @@
 import { useAuth } from "react-oidc-context";
-import { useCallback } from 'react'; // <--- Import this
+import { useCallback } from 'react';
 
 export function useApi() {
     const auth = useAuth();

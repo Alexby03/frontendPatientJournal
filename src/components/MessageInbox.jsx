@@ -13,13 +13,10 @@ function MessageInbox() {
     const auth = useAuth();
     const { request } = useApi();
 
-    // Hämta notification context
     const { hasNewMessages, clearNotifications } = useNotifications();
 
-    // Hämta ID säkert
     const userId = auth.user?.profile?.sub;
 
-    // Hämta roller för navigering
     const roles = auth.user?.profile?.realm_access?.roles || [];
     const isDoctor = roles.includes("doctor") || roles.includes("Doctor");
     const isStaff = roles.includes("OtherStaff") || roles.includes("otherstaff");
@@ -29,18 +26,15 @@ function MessageInbox() {
     const [latestMessages, setLatestMessages] = useState({});
     const [unreadThreads, setUnreadThreads] = useState({});
 
-    // UI States
     const [showNewForm, setShowNewForm] = useState(false);
     const [subject, setSubject] = useState("");
     const [receiverEmail, setReceiverEmail] = useState("");
     const [creating, setCreating] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // Funktion för att hämta sessioner (utbruten för återanvändning)
     const fetchSessions = useCallback(async () => {
         if (!userId || !auth.isAuthenticated) return;
 
-        // Sätt bara loading vid första laddningen, inte vid live-uppdatering
         if (sessions.length === 0) setLoading(true);
 
         try {
@@ -48,8 +42,6 @@ function MessageInbox() {
             if (!res.ok) throw new Error("Could not fetch sessions");
 
             const data = await res.json();
-            // Sortera så nyaste konversationen hamnar överst (om backend inte gör det)
-            // data.sort((a, b) => new Date(b.creationDate) - new Date(a.creationDate));
 
             setSessions(data);
 
@@ -65,7 +57,6 @@ function MessageInbox() {
                             latestMsgs[session.sessionId] = msg.message;
 
                             const isMyMessage = msg.senderId === userId;
-                            // Enkel logik: Om senaste meddelandet inte är från mig, och oläst -> Visa dot i trådlistan
                             unread[session.sessionId] = !msg.read && !isMyMessage;
                         } else {
                             latestMsgs[session.sessionId] = "No messages yet";
@@ -85,28 +76,22 @@ function MessageInbox() {
         } finally {
             setLoading(false);
         }
-    }, [userId, auth.isAuthenticated, request]); // sessions.length tas bort för att undvika loop
+    }, [userId, auth.isAuthenticated, request]);
 
-    // 1. Initial Fetch & Clear Notifications
     useEffect(() => {
         fetchSessions();
 
-        // När vi går in i inkorgen, släck huvud-notifikationen (pricken på Dashboard)
         clearNotifications();
 
     }, [fetchSessions, clearNotifications]);
 
-    // 2. Live Update: Om hasNewMessages blir true (från WebSocket), hämta listan igen!
     useEffect(() => {
         if (hasNewMessages) {
             fetchSessions();
-            // Vi rensar inte pricken här, för användaren kanske inte tittat på den nya tråden än.
-            // Den släcks nästa gång man klickar på "Conversations" eller laddar om sidan.
         }
     }, [hasNewMessages, fetchSessions]);
 
 
-    // 3. Create Session
     const handleCreateSession = async (e) => {
         e.preventDefault();
         if (!subject || !receiverEmail) return;
@@ -150,9 +135,7 @@ function MessageInbox() {
         }
     };
 
-    // 4. Navigation Helper
     const handleBack = () => {
-        // Rensa pricken när vi går tillbaka till dashboard också, för säkerhets skull
         clearNotifications();
 
         if (isDoctor || isStaff) {

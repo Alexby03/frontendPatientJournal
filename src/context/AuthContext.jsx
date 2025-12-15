@@ -2,8 +2,6 @@ import { createContext, useState, useContext, useEffect } from "react";
 
 export const AuthContext = createContext();
 
-//TODO: Fix the uncaught runtime error in React, look into useAuth()
-
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);

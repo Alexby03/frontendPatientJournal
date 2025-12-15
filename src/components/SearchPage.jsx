@@ -9,15 +9,11 @@ const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 function SearchPage() {
     const navigate = useNavigate();
 
-    // Auth Hooks
     const auth = useAuth();
     const { request } = useApi();
 
-    // Hämta ID säkert från Keycloak token
-    // (Keycloaks 'sub' claim matchar ditt Practitioner ID i backend om du mappat det rätt i Onboarding)
     const practitionerId = auth.user?.profile?.sub;
 
-    // Search inputs
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [condition, setCondition] = useState("");
@@ -26,9 +22,8 @@ function SearchPage() {
 
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(""); // Rättat state destrukturering
+    const [error, setError] = useState("");
 
-    // Hjälpmetod för att kolla auth status innan sökning
     const checkAuth = () => {
         if (!auth.isAuthenticated || !auth.user) {
             setError("You must be logged in to search.");
@@ -68,7 +63,6 @@ function SearchPage() {
             const res = await request(
                 `${API_SEARCHSERVICE_URL}/search/patient/email/${encodeURIComponent(email)}`
             );
-            // Eftersom denna endpoint returnerar ETT objekt, lägg det i en array
             if (res.ok) {
                 const data = await res.json();
                 setResults([data]);
@@ -108,7 +102,6 @@ function SearchPage() {
     const searchPractitionerDate = async () => {
         if (!checkAuth() || !date) return;
 
-        // Här använder vi practitionerId från token!
         if (!practitionerId) {
             setError("Could not identify your practitioner ID.");
             return;
@@ -133,7 +126,7 @@ function SearchPage() {
         }
     };
 
-    const searchPatientsByDoctorEmail = async () => { // Tog bort (e) då knappen inte är i ett <form>
+    const searchPatientsByDoctorEmail = async () => {
         if (!checkAuth() || !practitionerEmail) return;
 
         setLoading(true);
@@ -141,7 +134,6 @@ function SearchPage() {
         setResults([]);
 
         try {
-            // 1. Hitta läkaren först
             const doctorRes = await request(`${API_SEARCHSERVICE_URL}/search/practitioner/email/${encodeURIComponent(practitionerEmail)}`);
             if (!doctorRes.ok) {
                 setError("No practitioner found with that email.");
@@ -151,7 +143,6 @@ function SearchPage() {
 
             const doctor = await doctorRes.json();
 
-            // Kolla efter id eller practitionerId beroende på din DTO
             const docId = doctor.id || doctor.practitionerId;
 
             if (!docId) {
@@ -160,7 +151,6 @@ function SearchPage() {
                 return;
             }
 
-            // 2. Hämta patienterna för den läkaren
             const patientsRes = await request(`${API_SEARCHSERVICE_URL}/search/patients/practitioner/id/${docId}`);
 
             if (!patientsRes.ok) {
@@ -178,7 +168,6 @@ function SearchPage() {
         }
     };
 
-    // UI Render Guard
     if (auth.isLoading) return <p className="loading">Loading authentication...</p>;
 
     return (

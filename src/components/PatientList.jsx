@@ -9,15 +9,13 @@ const API_SEARCHSERVICE_URL = process.env.REACT_APP_API_SEARCHSERVICE_URL;
 
 function PatientList() {
     const navigate = useNavigate();
-    const auth = useAuth(); // Används för user info och logout
+    const auth = useAuth();
     const { request } = useApi();
     const { hasNewMessages, clearNotifications } = useNotifications();
 
-    // Hämta data från auth-objektet säkert
     const userProfile = auth.user?.profile;
     const keycloakId = userProfile?.sub;
 
-    // Logik för att avgöra om man är doktor
     const roles = userProfile?.realm_access?.roles || [];
     const email = userProfile?.email || "";
     const isDoctor = roles.includes("doctor") || roles.includes("Doctor") || email.includes("doctor");
@@ -30,7 +28,6 @@ function PatientList() {
     const [searchResults, setSearchResults] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
 
-    // 1. Fetch Patients (Mina patienter)
     useEffect(() => {
         if (!keycloakId || !auth.isAuthenticated) return;
 
@@ -66,8 +63,6 @@ function PatientList() {
 
     }, [keycloakId, isDoctor, auth.isAuthenticated]);
 
-
-    // 2. Search Logic (Debounced) - För snabbsökningen längst ner
     useEffect(() => {
         if (!searchQuery) {
             setSearchResults([]);
@@ -96,7 +91,6 @@ function PatientList() {
         return () => clearTimeout(debounceTimeout);
     }, [searchQuery]);
 
-    // Helpers
     const handleLogout = () => {
         auth.signoutRedirect();
     };

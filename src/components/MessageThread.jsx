@@ -13,11 +13,9 @@ function MessageThread() {
     const auth = useAuth();
     const { request } = useApi();
 
-    // Säkra user-variabler
     const userId = auth.user?.profile?.sub;
     const userName = auth.user?.profile?.name || "Me";
 
-    // Roller för navigering
     const roles = auth.user?.profile?.realm_access?.roles || [];
     const isDoctor = roles.includes("doctor") || roles.includes("Doctor");
     const isPatient = roles.includes("patient") || roles.includes("Patient");
@@ -30,7 +28,6 @@ function MessageThread() {
 
     const threadEndRef = useRef(null);
 
-    // useCallback för att cacha namn-hämtning och undvika re-renders
     const getSenderName = useCallback(async (senderId, currentCache) => {
         if (senderId === userId) return userName;
         if (currentCache[senderId]) return currentCache[senderId];
@@ -47,7 +44,6 @@ function MessageThread() {
         }
     }, [request, userId, userName]);
 
-    // Hämta meddelanden
     useEffect(() => {
         if (!userId || !auth.isAuthenticated) return;
 
@@ -59,14 +55,11 @@ function MessageThread() {
 
                 let data = await res.json();
 
-                // Sortera: Äldst först (så konversationen läses uppifrån och ner)
                 data.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
 
-                // Hämta namn för alla avsändare
                 const uniqueSenders = [...new Set(data.map(m => m.senderId))];
                 const newCache = { ...userCache };
 
-                // Hämta namn parallellt
                 await Promise.all(uniqueSenders.map(async (sid) => {
                     if (sid !== userId && !newCache[sid]) {
                         newCache[sid] = await getSenderName(sid, newCache);
@@ -75,7 +68,6 @@ function MessageThread() {
 
                 setUserCache(newCache);
 
-                // Mappa in namnen
                 const messagesWithNames = data.map(msg => ({
                     ...msg,
                     senderName: msg.senderId === userId ? userName : (newCache[msg.senderId] || "Unknown")
@@ -91,10 +83,8 @@ function MessageThread() {
 
         fetchMessages();
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [threadId, userId, auth.isAuthenticated]); // Minimerade dependencies
+    }, [threadId, userId, auth.isAuthenticated]);
 
-    // Scrolla till botten vid nya meddelanden
     useEffect(() => {
         threadEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
@@ -119,7 +109,7 @@ function MessageThread() {
             if (!res.ok) throw new Error("Failed to send message");
 
             const savedMessage = await res.json();
-            savedMessage.senderName = userName; // Vi vet att vi skickade det
+            savedMessage.senderName = userName;
 
             setMessages(prev => [...prev, savedMessage]);
             setNewMessage("");
@@ -143,7 +133,6 @@ function MessageThread() {
     };
 
     const handleBack = () => {
-        // Enkel navigering tillbaka till inkorgen
         navigate("/messages");
     };
 

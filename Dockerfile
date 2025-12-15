@@ -4,6 +4,8 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
+RUN rm -f .env
+
 ENV REACT_APP_API_BASE_URL=/service/journal
 ENV REACT_APP_API_PATIENTS_URL=/service/journal/api/patients
 ENV REACT_APP_API_USERMANAGER_URL=/service/users
