@@ -2,9 +2,9 @@ import React from "react";
 import { AuthProvider } from "react-oidc-context";
 
 const oidcConfig = {
-    authority: "http://localhost:8080/realms/PatientJournal",
+    authority: process.env.REACT_APP_AUTHORITY_URL,
     client_id: "patientjournal-keycloak",
-    redirect_uri: "http://localhost:3000/",
+    redirect_uri: process.env.REACT_APP_REDIRECT_URL,
     post_logout_redirect_uri: window.location.origin,
     response_type: "code",
     scope: "openid profile email",

@@ -11,6 +11,8 @@ ENV REACT_APP_API_MESSAGESERVICE_URL=/service/messages
 ENV REACT_APP_API_SEARCHSERVICE_URL=/service/search
 ENV REACT_APP_API_IMAGEEDITOR_URL=/service/images
 ENV REACT_APP_WEBSOCKET_URL=wss://patientjournal-frontendreact.app.cloud.cbh.kth.se/service/event-listener/ws/messages
+ENV REACT_APP_REDIRECT_URL=https://patientjournal-frontendreact.app.cloud.cbh.kth.se/
+ENV REACT_APP_AUTHORITY_URL=https://patientjournal-keycloak.app.cloud.cbh.kth.se/realms/PatientJournal
 
 RUN npm run build
 
